@@ -9,8 +9,8 @@
 #define LOOPTIME 5000 // Loop time (ms), Drive motor for 5 seconds
 // Gain Settings
 #define PGAIN 1000.0
-#define IGAIN 0.1
-#define DGAIN 0.5
+#define IGAIN 0.0
+#define DGAIN 1.0
 
 //# of GPIO Pins 
 #define ENCODERA 17
@@ -19,9 +19,9 @@
 #define MOTOR1 19
 #define MOTOR2 26
 
-#define ARRAY_SIZE 15000 // Size of array (row)
+#define ARRAY_SIZE 20000 // Size of array (row)
 #define NUM_COLUMNS 2 // Size of array (col, time & position)
-#define DAQ_TIME 15000 // Data logging for 10s
+#define DAQ_TIME 20000 // Data logging for 15s
 
 int n; // number of trails
 
@@ -36,6 +36,7 @@ float *refer_array = NULL;
 unsigned int startTime = 0;
 unsigned int checkTimeBefore = 0;
 unsigned int checkTime = 0;
+unsigned int sT = 0;
 
 float m; // Input to Motor
 float m1; // Previous Input to Motor 
@@ -50,10 +51,12 @@ float ITAE; // number of Rotation;
 
 float G1, G2, G3; // Constant values of results of GAIN calculation
 
+int i = 0;
+
 // Save time and Position of motor
 void updateDataArray()
 {
-    dataArray[dataIndex][0] = (float)(checkTime - startTime) / 1000.0; 
+    dataArray[dataIndex][0] = (float)(checkTime - sT) / 1000.0; 
     dataArray[dataIndex][1] = redGearPosition;
     dataIndex++;
 }
@@ -113,6 +116,9 @@ void funcEncoderB()
 }
 
 void PID_CONTROL(){
+    if(i==0) {
+        sT = millis();
+    }
     startTime = millis();
     checkTimeBefore = millis();
     e = referencePosition - redGearPosition;
@@ -126,7 +132,6 @@ void PID_CONTROL(){
     G3 = DGAIN/SAMPLINGTIME;
 
     while(1){
-        if
         checkTime = millis();
         if ((checkTime-startTime >= LOOPTIME)){
             break;
@@ -161,13 +166,11 @@ int main(void)
     char filename[100];
     char filepath[200];
     FILE* file;
-    sprintf(filename, "%.1f_%.1f_%.1f", PGAIN, IGAIN, DGAIN);
-    sprintf(filepath, "/home/pi/Mechatronics/csv_test/%s.csv", filename);
-    file = fopen(filepath, "w+");
 
     int n; // Number of trials
-    printf("input how many n: ");
-    scanf("%d", &n);
+    //printf("input how many n: ");
+    //scanf("%d", &n);
+    n = 3;
 
     // Array of reference positions for each trial
     refer_array = (float *)malloc(n * sizeof(float));
@@ -176,15 +179,18 @@ int main(void)
         return 1;
     }
 
-    printf("Input int: ");
-    for(int i = 0; i < n; i++) {
-        scanf("%f", &refer_array[i]);
-    }
-    printf("Input Result: ");
-    for(int i = 0; i < n; i++) {
-        printf("%f ", refer_array[i]);
-    }
-    printf("\n");
+    // printf("Input int: ");
+    //for(int i = 0; i < n; i++) {
+      //  scanf("%f", &refer_array[i]);
+    //}
+    //printf("Input Result: ");
+    //for(int i = 0; i < n; i++) {
+      //  printf("%f ", refer_array[i]);
+    //}
+    // printf("\n");
+    refer_array[0] = 2.0;
+    refer_array[1] = -4.0;
+    refer_array[2] = 6.0;
    
     wiringPiSetupGpio();
     pinMode(ENCODERA, INPUT);
@@ -196,11 +202,10 @@ int main(void)
     wiringPiISR(ENCODERA, INT_EDGE_BOTH, funcEncoderA);
     wiringPiISR(ENCODERB, INT_EDGE_BOTH, funcEncoderB);
 
-    int i = 0;
-
     while(1)
 	{
-        referencePosition = refer_array[i]
+        if(i==n) break;
+        referencePosition = refer_array[i];
 		PID_CONTROL();
         i++;
 	}
@@ -211,10 +216,15 @@ int main(void)
     
     printf("\nITAE: %.4f", ITAE);
     
+    sprintf(filename, "%.1f_%.1f_%.1f_%.2f", PGAIN, IGAIN, DGAIN, ITAE);
+    sprintf(filepath, "/home/pi/Mechatronics/csv_test/%s.csv", filename);
+    file = fopen(filepath, "w+");
+    
     for (int i=0;i<dataIndex;i++)
     {
         fprintf(file, "%.3f,%.3f\n", dataArray[i][0], dataArray[i][1]);
     }
+    fprintf(file, "ITAE,%.3f\n", ITAE);
     fclose(file);
     
     plotGraph();

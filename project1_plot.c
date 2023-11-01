@@ -12,7 +12,7 @@
 #define IGAIN 0.1
 #define DGAIN 0.5
 
-//# of GPIO Pins 
+// # of GPIO Pins 
 #define ENCODERA 17
 #define ENCODERB 27
 #define ENC2REDGEAR 217

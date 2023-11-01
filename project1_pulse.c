@@ -94,7 +94,7 @@ void PID_CONTROL()
 {
     startTime = millis();
     checkTimeBefore = millis();
-    e = referencePosition - redGearPosition; // 
+    e = referencePosition - redGearPosition;
 
     // Initialize m1, e1, e2  
     m1 = 0;
