@@ -5,11 +5,11 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define SAMPLINGTIME 1  // Sampling time (s)
+#define SAMPLINGTIME 5 // Sampling time (s)
 #define LOOPTIME 5000 // Loop time (ms), Drive motor for 5 seconds
 // Gain Settings
-#define PGAIN 1000.0
-#define IGAIN 0.0
+#define PGAIN 600.0
+#define IGAIN 1.0
 #define DGAIN 1.0
 
 //# of GPIO Pins 
@@ -127,9 +127,9 @@ void PID_CONTROL(){
     e1 = 0;
     e2 = 0;
     
-    G1 = PGAIN + IGAIN*SAMPLINGTIME + DGAIN/SAMPLINGTIME;
-    G2 = -(PGAIN + 2*DGAIN/SAMPLINGTIME);
-    G3 = DGAIN/SAMPLINGTIME;
+    G1 = PGAIN + IGAIN*SAMPLINGTIME/1000.0 + DGAIN/SAMPLINGTIME*1000.0;
+    G2 = -(PGAIN + 2*DGAIN/SAMPLINGTIME*1000.0);
+    G3 = DGAIN/SAMPLINGTIME*1000.0;
 
     while(1){
         checkTime = millis();
@@ -155,7 +155,7 @@ void PID_CONTROL(){
             m1 = m;
             e1 = e;
             e2 = e1;
-            ITAE = ITAE + SAMPLINGTIME * (checkTime-startTime)/1000.0 * fabs(e);
+            ITAE = ITAE + SAMPLINGTIME/1000.0 * (checkTime-startTime)/1000.0 * fabs(e);
             
         }
     }
@@ -170,7 +170,7 @@ int main(void)
     int n; // Number of trials
     //printf("input how many n: ");
     //scanf("%d", &n);
-    n = 3;
+    n = 4;
 
     // Array of reference positions for each trial
     refer_array = (float *)malloc(n * sizeof(float));
@@ -191,6 +191,7 @@ int main(void)
     refer_array[0] = 2.0;
     refer_array[1] = -4.0;
     refer_array[2] = 6.0;
+    refer_array[3] = -8.0;
    
     wiringPiSetupGpio();
     pinMode(ENCODERA, INPUT);

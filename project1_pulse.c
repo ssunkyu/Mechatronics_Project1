@@ -8,9 +8,9 @@
 
 #define SAMPLINGTIME 5 // Sampling time (ms)
 // Gain Settings
-#define PGAIN 800
+#define PGAIN 400
 #define IGAIN 0.1
-#define DGAIN 0.5
+#define DGAIN 1.0
 
 //# of GPIO Pins
 #define PULSE 5 // should change

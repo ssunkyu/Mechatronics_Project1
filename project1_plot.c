@@ -8,9 +8,9 @@
 #define SAMPLINGTIME 5 // Sampling time (ms)
 #define LOOPTIME 5000 // Loop time (ms), Drive motor for 5 seconds
 // Gain Settings
-#define PGAIN 1000.0
+#define PGAIN 400.0
 #define IGAIN 0.1
-#define DGAIN 1.0
+#define DGAIN 0.5
 
 // # of GPIO Pins 
 #define ENCODERA 17
@@ -161,10 +161,7 @@ int main(void)
     char filename[100];
     char filepath[200];
     FILE* file;
-    sprintf(filename, "%.1f_%.1f_%.1f", PGAIN, IGAIN, DGAIN);
-    sprintf(filepath, "/home/pi/Mechatronics/csv/%s.csv", filename);
-    file = fopen(filepath, "w+");
-    
+
     referencePosition = 8.0;
    
     wiringPiSetupGpio();
@@ -184,6 +181,10 @@ int main(void)
     printf("Finished!\n");
     
     printf("\nITAE: %.4f", ITAE);
+    
+    sprintf(filename, "%.1f_%.1f_%.1f_%.2f", PGAIN, IGAIN, DGAIN, ITAE);
+    sprintf(filepath, "/home/pi/Mechatronics/csv/%s.csv", filename);
+    file = fopen(filepath, "w+");
     
     for (int i=0;i<dataIndex;i++)
     {
