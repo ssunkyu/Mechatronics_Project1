@@ -7,18 +7,18 @@
 #include <stdlib.h>
 
 #define SAMPLINGTIME 0.01  // Sampling time (s)
-#define LOOPTIME 5000 // Loop time (ms)
-#define ENCODERA 17
-#define ENCODERB 27
-#define ENC2REDGEAR 217
-#define PULSE 5 // should change
-
-#define MOTOR1 19
-#define MOTOR2 26
-
+// Gain Settings
 #define PGAIN 1000
 #define IGAIN 8
 #define DGAIN 1
+
+//# of GPIO Pins
+#define PULSE 5 // should change
+#define ENCODERA 17
+#define ENCODERB 27
+#define ENC2REDGEAR 217
+#define MOTOR1 19
+#define MOTOR2 26
 
 int n; // number of trails
 int encA; // signal of encA
@@ -29,7 +29,7 @@ float redGearPosition = 0; // Actual Rotation Position
 float referencePosition = 0; // Reference Rotation Position
 float *refer_array = NULL;
 
-unsigned int startTime = 0;
+unsigned int startTime = 0; // Start time of PID control
 unsigned int checkTimeBefore = 0;
 unsigned int checkTime = 0;
 
@@ -39,14 +39,27 @@ float e; // Present Step Error
 float e1; // Previous Step Error
 float e2; // Two Steps back Step Error
 
-float ITAE; // number of Rotation;
+float ITAE; // Integral of Time-weighted Absolute Error
 float G1, G2, G3; // Constant values of results of GAIN calculation
 
 int pulseChanged = 0;
+int pulse_n = 0;
 
+// If you want to stop motor when motor is rotating, press ctrl+c
+void signalHandler(int signum)
+{
+    softPwmWrite(MOTOR1, 0);
+    softPwmWrite(MOTOR2, 0);
+    printf("\nInterrupted! Motor stopped.\n");
+
+    exit(signum);
+}
+
+// Using ISR, if PULSE is HIGH, change the value of flag to change next reference position
 void onPulseChange() {
     if (digitalRead(PULSE) == HIGH) {
-        pulseChanged = 1;
+        pulseChanged = 1; // value of flag
+        pulse_n++;
     }
 }
 
@@ -64,7 +77,6 @@ void funcEncoderA()
         if (encB == LOW) encoderPosition--;
         else encoderPosition++;
     }
-
     redGearPosition = (float)encoderPosition / ENC2REDGEAR;
     e = referencePosition - redGearPosition;
     // printf("funcEncoderA() A: %d B: %d encPos: %d gearPos: %f\n", encA, encB, encoderPosition, redGearPosition);
@@ -79,23 +91,23 @@ void funcEncoderB()
         if (encA == LOW) encoderPosition--;
         else encoderPosition++;
     }
-
     else
     {
         if (encA == LOW) encoderPosition++;
         else encoderPosition--;
     }
-
     redGearPosition = (float)encoderPosition / ENC2REDGEAR;
     e = referencePosition - redGearPosition;
     // printf("funcEncoderB() A: %d B: %d encPos: %d gearPos: %f\n",encA, encB, encoderPosition, redGearPosition);
 }
 
-void PID_CONTROL(){
+void PID_CONTROL()
+{
     startTime = millis();
     checkTimeBefore = millis();
-    e = referencePosition - redGearPosition;
+    e = referencePosition - redGearPosition; // 
 
+    // Initialize m1, e1, e2  
     m1 = 0;
     e1 = 0;
     e2 = 0;
@@ -112,7 +124,7 @@ void PID_CONTROL(){
         if (pulseChanged)
         {
             pulseChanged = 0; // Reset the flag
-            break;
+            break; // If checkTime
         }
 
         m = m1 + G1*e + G2*e1 + G3*e2;
@@ -122,22 +134,18 @@ void PID_CONTROL(){
             if((checkTime-startTime)%100==0){
                 printf("%f\n", redGearPosition);
             }
-
             if(e > 0){
                 softPwmWrite(MOTOR2,m);
                 softPwmWrite(MOTOR1,0);
             }
-
             else{
                 softPwmWrite(MOTOR1,-m);
                 softPwmWrite(MOTOR2,0);
             }
-
             checkTimeBefore = checkTime;
             m1 = m;
             e1 = e;
             e2 = e1;
-
             ITAE = ITAE + SAMPLINGTIME * (checkTime-startTime)/1000.0 * fabs(e);
         }
     }
@@ -145,12 +153,12 @@ void PID_CONTROL(){
 
 int main(void)
 {
-    int n;
+    int n; // Number of trials
     printf("input how many n: ");
     scanf("%d", &n);
 
+    // Array of reference positions for each trial
     refer_array = (float *)malloc(n * sizeof(float));
-
     if(refer_array == NULL) {
         printf("Fail!\n");
         return 1;
@@ -160,7 +168,6 @@ int main(void)
     for(int i = 0; i < n; i++) {
         scanf("%f", &refer_array[i]);
     }
-
     printf("Input Result: ");
     for(int i = 0; i < n; i++) {
         printf("%f ", refer_array[i]);
@@ -177,22 +184,18 @@ int main(void)
 
     wiringPiISR(ENCODERA, INT_EDGE_BOTH, funcEncoderB);
     wiringPiISR(ENCODERB, INT_EDGE_BOTH, funcEncoderA);
+    // If, PULSE INT_EDGE_RISING, onPulseChange is interrupted
     wiringPiISR(PULSE, INT_EDGE_RISING, onPulseChange);
-
-    int i = 0;
-    pulse = LOW;
 
     while(1)
     {
-		if (i ==n) break;
+		if (pulse_n==n) break;
 		
-		referencePosition = refer_array[i];
-        pulse = digitalRead(PULSE);
+		referencePosition = refer_array[i]; // Change reference position to ith refer_array
         if(pulseChanged)
         {
             PID_CONTROL();
-            i +=1;
-            pulseChanged = 1;
+            // pulseChanged = 1;
         }
     }
 

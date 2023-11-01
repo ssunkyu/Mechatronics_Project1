@@ -6,21 +6,22 @@
 #include <string.h>
 
 #define SAMPLINGTIME 0.01  // Sampling time (s)
-#define LOOPTIME 5000 // Loop time (ms)
+#define LOOPTIME 5000 // Loop time (ms), Drive motor for 5 seconds
+// Gain Settings
 #define PGAIN 600.0
 #define IGAIN 0.1
 #define DGAIN 50.0
 
+//# of GPIO Pins 
 #define ENCODERA 17
 #define ENCODERB 27
 #define ENC2REDGEAR 217
-
 #define MOTOR1 19
 #define MOTOR2 26
 
-#define ARRAY_SIZE 10000
-#define NUM_COLUMNS 2
-#define DAQ_TIME 10000
+#define ARRAY_SIZE 10000 // Size of array (row)
+#define NUM_COLUMNS 2 // Size of array (col, time & position)
+#define DAQ_TIME 10000 // Data logging for 10s
 
 int n; // number of trails
 
@@ -28,7 +29,7 @@ int encA; // signal of encA
 int encB; // signal of encB
 int pulse; // signal of pulse
 int encoderPosition = 0; // Position of Encoder
-float redGearPosition = 0; // Actual Rotation Position
+float redGearPosition = 0; // Rotation Position of Motor
 float referencePosition = 0; // Reference Rotation Position
 float *refer_array = NULL;
 
@@ -37,35 +38,38 @@ unsigned int checkTimeBefore = 0;
 unsigned int checkTime = 0;
 
 float m; // Input to Motor
-float m1; // Prevvious Input to Motor 
+float m1; // Previous Input to Motor 
 float e; // Present Step Error
 float e1; // Previous Step Error
 float e2; // Two Steps back Step Error
 
 int dataIndex = 0;
-float dataArray[ARRAY_SIZE][NUM_COLUMNS];
+float dataArray[ARRAY_SIZE][NUM_COLUMNS]; // 2D array (rows * cols)
 
 float ITAE; // number of Rotation;
 
 float G1, G2, G3; // Constant values of results of GAIN calculation
 
+// Save time and Position of motor
 void updateDataArray()
 {
-    dataArray[dataIndex][0] = (float)(checkTime - startTime) / 1000.0;
+    dataArray[dataIndex][0] = (float)(checkTime - startTime) / 1000.0; 
     dataArray[dataIndex][1] = redGearPosition;
     dataIndex++;
 }
 
+// Plot the result
 void plotGraph()
 {
-    FILE *gnuplot = popen("gnuplot -persistent", "w");
+    FILE *gnuplot = popen("gnuplot -persistent", "w"); // Create a pipe
     
     fprintf(gnuplot, "set yrange [0:%lf]\n",referencePosition*1.2);
-    fprintf(gnuplot, "set xlabel 'Time [s]'\n"); 
-    fprintf(gnuplot, "set ylabel 'Motor position [r]'\n"); 
+    fprintf(gnuplot, "set xlabel 'Time [s]'\n"); // Set a x label
+    fprintf(gnuplot, "set ylabel 'Motor position [r]'\n"); // Set a y label
     fprintf(gnuplot, "plot '-' with lines title 'Position', %f with lines lt 2 title 'Ref'\n",referencePosition);
     for (int i = 0; i < dataIndex; ++i) {
         fprintf(gnuplot, "%f %f\n", dataArray[i][0], dataArray[i][1]);
+        // Plot motor position
     }
     fprintf(gnuplot, "e\n");
 }
