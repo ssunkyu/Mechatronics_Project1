@@ -69,13 +69,13 @@ void funcEncoderA()
     encB = digitalRead(ENCODERB);
     if (encA == HIGH)
     {
-        if (encB == LOW) encoderPosition++;
-        else encoderPosition--;
+        if (encB == LOW) encoderPosition--;
+        else encoderPosition++;
     }
     else
     {
-        if (encB == LOW) encoderPosition--;
-        else encoderPosition++;
+        if (encB == LOW) encoderPosition++;
+        else encoderPosition--;
     }
     redGearPosition = (float)encoderPosition / ENC2REDGEAR;
     e = referencePosition - redGearPosition;
@@ -88,13 +88,13 @@ void funcEncoderB()
     encB = digitalRead(ENCODERB);
     if (encB == HIGH)
     {
-        if (encA == LOW) encoderPosition--;
-        else encoderPosition++;
+        if (encA == LOW) encoderPosition++;
+        else encoderPosition--;
     }
     else
     {
-        if (encA == LOW) encoderPosition++;
-        else encoderPosition--;
+        if (encA == LOW) encoderPosition--;
+        else encoderPosition++;
     }
     redGearPosition = (float)encoderPosition / ENC2REDGEAR;
     e = referencePosition - redGearPosition;
@@ -182,8 +182,8 @@ int main(void)
     softPwmCreate(MOTOR1, 0, 100);
     softPwmCreate(MOTOR2, 0, 100);
 
-    wiringPiISR(ENCODERA, INT_EDGE_BOTH, funcEncoderB);
-    wiringPiISR(ENCODERB, INT_EDGE_BOTH, funcEncoderA);
+    wiringPiISR(ENCODERA, INT_EDGE_BOTH, funcEncoderA);
+    wiringPiISR(ENCODERB, INT_EDGE_BOTH, funcEncoderB);
     // If, PULSE INT_EDGE_RISING, onPulseChange is interrupted
     wiringPiISR(PULSE, INT_EDGE_RISING, onPulseChange);
 
