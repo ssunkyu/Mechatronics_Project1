@@ -46,7 +46,7 @@ float e2; // Two Steps back Step Error
 int dataIndex = 0;
 float dataArray[ARRAY_SIZE][NUM_COLUMNS]; // 2D array (rows * cols)
 
-float ITAE; // number of Rotation;
+float ITAE = 0; // number of Rotation;
 
 float G1, G2, G3; // Constant values of results of GAIN calculation
 
@@ -148,8 +148,8 @@ void PID_CONTROL(){
             checkTimeBefore = checkTime;
             updateDataArray();
             m1 = m;
-            e1 = e;
             e2 = e1;
+            e1 = e;
             ITAE = ITAE + SAMPLINGTIME/1000.0 * (checkTime-startTime)/1000.0 * fabs(e);
             
         }

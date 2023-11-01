@@ -8,7 +8,7 @@
 
 #define SAMPLINGTIME 5 // Sampling time (ms)
 // Gain Settings
-#define PGAIN 400
+#define PGAIN 600
 #define IGAIN 0.1
 #define DGAIN 1.0
 
@@ -39,7 +39,7 @@ float e; // Present Step Error
 float e1; // Previous Step Error
 float e2; // Two Steps back Step Error
 
-float ITAE; // Integral of Time-weighted Absolute Error
+float ITAE = 0; // Integral of Time-weighted Absolute Error
 float G1, G2, G3; // Constant values of results of GAIN calculation
 
 int pulseChanged = 0;
@@ -132,8 +132,8 @@ void PID_CONTROL()
             }
             checkTimeBefore = checkTime;
             m1 = m;
-            e1 = e;
             e2 = e1;
+            e1 = e;
             ITAE = ITAE + SAMPLINGTIME/1000.0 * (checkTime-startTime)/1000.0 * fabs(e);
         }
     }
