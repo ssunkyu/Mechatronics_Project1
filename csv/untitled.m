@@ -15,7 +15,7 @@ Ki = str2double(pid_values{2}{1});
 Kd = str2double(pid_values{3}{1});
 
 u = 8 * ones(size(y));  % Step magnitude is 8
-Ts = 0.001; % Sampling Time
+Ts = 0.01; % Sampling Time
 data = iddata(y, u, Ts);
 
 

@@ -1,6 +1,6 @@
 % Modify filename
 filename = '600.0_0.1_1.0.csv';
-Ts = 0.001; % Sampling Time
+Ts = 0.01; % Sampling Time
 data = readmatrix(filename);
 y = data(:, 2);
 
