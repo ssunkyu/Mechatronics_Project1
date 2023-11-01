@@ -119,7 +119,7 @@ void PID_CONTROL()
         m = m1 + G1*e + G2*e1 + G3*e2;
         // printf("aa: %f\n", m);
 
-        if (checkTime - checkTimeBefore > SAMPLINGTIME){
+        if (checkTime - checkTimeBefore >= SAMPLINGTIME){
             if((checkTime-startTime)%100==0){
                 printf("%f\n", redGearPosition);
             }

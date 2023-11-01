@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define SAMPLINGTIME 0.01  // Sampling time (s)
+#define SAMPLINGTIME 1  // Sampling time (s)
 #define LOOPTIME 5000 // Loop time (ms), Drive motor for 5 seconds
 // Gain Settings
 #define PGAIN 1000.0
@@ -138,7 +138,7 @@ void PID_CONTROL(){
         }
         m = m1 + G1*e + G2*e1 + G3*e2;
 
-        if (checkTime - checkTimeBefore > SAMPLINGTIME){
+        if (checkTime - checkTimeBefore >= SAMPLINGTIME){
             if((checkTime-startTime)%100==0){
                 printf("%f\n", redGearPosition);
             }

@@ -5,12 +5,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define SAMPLINGTIME 5  // Sampling time (ms)
-#define LOOPTIME 5000 // Loop time (ms), Drive motor for 5 seconds
+#define SAMPLINGTIME 3 // Sampling time (ms)
+#define LOOPTIME 12000 // Loop time (ms), Drive motor for 5 seconds
 // Gain Settings
 #define PGAIN 1000.0
 #define IGAIN 0.1
-#define DGAIN 0.5
+#define DGAIN 0.9
 
 // # of GPIO Pins 
 #define ENCODERA 17
@@ -132,7 +132,8 @@ void PID_CONTROL(){
         }
         m = m1 + G1*e + G2*e1 + G3*e2;
         // printf("aa: %f\n", m);
-        if (checkTime - checkTimeBefore > SAMPLINGTIME){
+        if (checkTime - checkTimeBefore >= SAMPLINGTIME){
+            //printf("loop time: %d ms, after init: %d ms\n", checkTime-checkTimeBefore,checkTime-startTime);
             if((checkTime-startTime)%100==0){
                 printf("%f\n", redGearPosition);
             }
@@ -149,7 +150,7 @@ void PID_CONTROL(){
             m1 = m;
             e1 = e;
             e2 = e1;
-            ITAE = ITAE + SAMPLINGTIME * (checkTime-startTime)/1000.0 * fabs(e);
+            ITAE = ITAE + SAMPLINGTIME/1000.0 * (checkTime-startTime)/1000.0 * fabs(e);
             
         }
     }
