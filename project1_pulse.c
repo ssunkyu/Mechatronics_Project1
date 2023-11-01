@@ -6,11 +6,11 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#define SAMPLINGTIME 3 // Sampling time (ms)
+#define SAMPLINGTIME 5 // Sampling time (ms)
 // Gain Settings
-#define PGAIN 891.52
+#define PGAIN 800
 #define IGAIN 0.1
-#define DGAIN 0.9
+#define DGAIN 0.5
 
 //# of GPIO Pins
 #define PULSE 5 // should change
