@@ -1,6 +1,6 @@
 % Modify filename
-filename = '600.0_0.1_1.0.csv';
-Ts = 0.01; % Sampling Time
+filename = '1200.0_0.1_1.0.csv';
+Ts = 0.001; % Sampling Time
 data = readmatrix(filename);
 y = data(:, 2);
 
@@ -19,6 +19,6 @@ pid_tf = tf([Kd Kp Ki], [1 0]);
 % 데이터에서 PID 컨트롤러의 영향 제거
 y_openloop = lsim(1/pid_tf, y, linspace(0, Ts*length(y), length(y)));
 
-sys = tfest(u, y_openloop,3,0, 'Ts',Ts);
+sys = tfest(y,u, 3, 0, 'Ts', Ts);
 sys.Numerator
 sys.Denominator

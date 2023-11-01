@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define SAMPLINGTIME 0.01  // Sampling time (s)
+#define SAMPLINGTIME 5  // Sampling time (ms)
 #define LOOPTIME 5000 // Loop time (ms), Drive motor for 5 seconds
 // Gain Settings
 #define PGAIN 1000.0

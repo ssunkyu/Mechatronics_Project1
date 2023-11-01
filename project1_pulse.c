@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#define SAMPLINGTIME 0.01  // Sampling time (s)
+#define SAMPLINGTIME 5  // Sampling time (ms)
 // Gain Settings
 #define PGAIN 800.0
 #define IGAIN 0.1
