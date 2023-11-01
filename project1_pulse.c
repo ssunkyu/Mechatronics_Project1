@@ -8,9 +8,9 @@
 
 #define SAMPLINGTIME 0.01  // Sampling time (s)
 // Gain Settings
-#define PGAIN 1000
-#define IGAIN 8
-#define DGAIN 1
+#define PGAIN 800.0
+#define IGAIN 0.1
+#define DGAIN 1.0
 
 //# of GPIO Pins
 #define PULSE 5 // should change
@@ -45,21 +45,10 @@ float G1, G2, G3; // Constant values of results of GAIN calculation
 int pulseChanged = 0;
 int pulse_n = 0;
 
-// If you want to stop motor when motor is rotating, press Ctrl+c
-void signalHandler(int signum)
-{
-    softPwmWrite(MOTOR1, 0);
-    softPwmWrite(MOTOR2, 0);
-    printf("\nInterrupted! Motor stopped.\n");
-
-    exit(signum);
-}
-
 // Using ISR, if PULSE is HIGH, change the value of flag to change next reference position
 void onPulseChange() {
     if (digitalRead(PULSE) == HIGH) {
         pulseChanged = 1; // value of flag
-        pulse_n++;
     }
 }
 
@@ -69,13 +58,13 @@ void funcEncoderA()
     encB = digitalRead(ENCODERB);
     if (encA == HIGH)
     {
-        if (encB == LOW) encoderPosition++;
-        else encoderPosition--;
+        if (encB == LOW) encoderPosition--;
+        else encoderPosition++;
     }
     else
     {
-        if (encB == LOW) encoderPosition--;
-        else encoderPosition++;
+        if (encB == LOW) encoderPosition++;
+        else encoderPosition--;
     }
     redGearPosition = (float)encoderPosition / ENC2REDGEAR;
     e = referencePosition - redGearPosition;
@@ -88,13 +77,13 @@ void funcEncoderB()
     encB = digitalRead(ENCODERB);
     if (encB == HIGH)
     {
-        if (encA == LOW) encoderPosition--;
-        else encoderPosition++;
+        if (encA == LOW) encoderPosition++;
+        else encoderPosition--;
     }
     else
     {
-        if (encA == LOW) encoderPosition++;
-        else encoderPosition--;
+        if (encA == LOW) encoderPosition--;
+        else encoderPosition++;
     }
     redGearPosition = (float)encoderPosition / ENC2REDGEAR;
     e = referencePosition - redGearPosition;
@@ -182,20 +171,21 @@ int main(void)
     softPwmCreate(MOTOR1, 0, 100);
     softPwmCreate(MOTOR2, 0, 100);
 
-    wiringPiISR(ENCODERA, INT_EDGE_BOTH, funcEncoderB);
-    wiringPiISR(ENCODERB, INT_EDGE_BOTH, funcEncoderA);
+    wiringPiISR(ENCODERA, INT_EDGE_BOTH, funcEncoderA);
+    wiringPiISR(ENCODERB, INT_EDGE_BOTH, funcEncoderB);
     // If, PULSE INT_EDGE_RISING, onPulseChange is interrupted
     wiringPiISR(PULSE, INT_EDGE_RISING, onPulseChange);
-
+    
     while(1)
     {
 		if (pulse_n==n) break;
 		
-		referencePosition = refer_array[i]; // Change reference position to ith refer_array
+		referencePosition = refer_array[pulse_n]; // Change reference position to ith refer_array
         if(pulseChanged)
         {
             PID_CONTROL();
-            // pulseChanged = 1;
+            pulse_n++;
+            pulseChanged = 1;
         }
     }
 
