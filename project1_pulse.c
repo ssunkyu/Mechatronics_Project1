@@ -6,11 +6,11 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#define SAMPLINGTIME 5  // Sampling time (ms)
+#define SAMPLINGTIME 3 // Sampling time (ms)
 // Gain Settings
-#define PGAIN 800.0
+#define PGAIN 891.52
 #define IGAIN 0.1
-#define DGAIN 1.0
+#define DGAIN 0.9
 
 //# of GPIO Pins
 #define PULSE 5 // should change
@@ -102,9 +102,9 @@ void PID_CONTROL()
     e2 = 0;
 
     //GAIN EQUATIONS
-    G1 = PGAIN + IGAIN*SAMPLINGTIME + DGAIN/SAMPLINGTIME;
-    G2 = -(PGAIN + 2*DGAIN/SAMPLINGTIME);
-    G3 = DGAIN/SAMPLINGTIME;
+    G1 = PGAIN + IGAIN*SAMPLINGTIME/1000.0 + DGAIN/SAMPLINGTIME*1000.0;
+    G2 = -(PGAIN + 2*DGAIN/SAMPLINGTIME*1000.0);
+    G3 = DGAIN/SAMPLINGTIME*1000.0;
 
     while(1)
     {
@@ -113,11 +113,10 @@ void PID_CONTROL()
         if (pulseChanged)
         {
             pulseChanged = 0; // Reset the flag
-            break; // If checkTime
+            break;
         }
 
         m = m1 + G1*e + G2*e1 + G3*e2;
-        // printf("aa: %f\n", m);
 
         if (checkTime - checkTimeBefore >= SAMPLINGTIME){
             if((checkTime-startTime)%100==0){
@@ -135,7 +134,7 @@ void PID_CONTROL()
             m1 = m;
             e1 = e;
             e2 = e1;
-            ITAE = ITAE + SAMPLINGTIME * (checkTime-startTime)/1000.0 * fabs(e);
+            ITAE = ITAE + SAMPLINGTIME/1000.0 * (checkTime-startTime)/1000.0 * fabs(e);
         }
     }
 }

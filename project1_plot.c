@@ -5,12 +5,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define SAMPLINGTIME 3 // Sampling time (ms)
-#define LOOPTIME 12000 // Loop time (ms), Drive motor for 5 seconds
+#define SAMPLINGTIME 5 // Sampling time (ms)
+#define LOOPTIME 5000 // Loop time (ms), Drive motor for 5 seconds
 // Gain Settings
 #define PGAIN 1000.0
 #define IGAIN 0.1
-#define DGAIN 0.9
+#define DGAIN 1.0
 
 // # of GPIO Pins 
 #define ENCODERA 17
@@ -121,9 +121,9 @@ void PID_CONTROL(){
     e1 = 0;
     e2 = 0;
     
-    G1 = PGAIN + IGAIN*SAMPLINGTIME + DGAIN/SAMPLINGTIME;
-    G2 = -(PGAIN + 2*DGAIN/SAMPLINGTIME);
-    G3 = DGAIN/SAMPLINGTIME;
+    G1 = PGAIN + IGAIN*SAMPLINGTIME/1000.0 + DGAIN/SAMPLINGTIME*1000.0;
+    G2 = -(PGAIN + 2*DGAIN/SAMPLINGTIME*1000.0);
+    G3 = DGAIN/SAMPLINGTIME*1000.0;
 
     while(1){
         checkTime = millis();
