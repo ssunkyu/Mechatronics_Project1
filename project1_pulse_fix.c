@@ -8,7 +8,7 @@
 
 #define SAMPLINGTIME 5 // Sampling time (ms)
 // Gain Settings
-#define PGAIN 600
+#define PGAIN 400
 #define IGAIN 0.1
 #define DGAIN 1.0
 
@@ -104,7 +104,9 @@ void PID_CONTROL()
     G1 = PGAIN + IGAIN*SAMPLINGTIME/1000.0 + DGAIN/SAMPLINGTIME*1000.0;
     G2 = -(PGAIN + 2*DGAIN/SAMPLINGTIME*1000.0);
     G3 = DGAIN/SAMPLINGTIME*1000.0;
-
+    
+    pulseChanged = 0;
+    
     while(!pulseChanged)
     {
         checkTime = millis();
@@ -134,7 +136,6 @@ void PID_CONTROL()
             ITAE = ITAE + SAMPLINGTIME/1000.0 * (checkTime-startTime)/1000.0 * fabs(e);
         }
     }
-    pulseChanged = 0;
 }
 
 int main(void)
@@ -187,7 +188,9 @@ int main(void)
     
     free(refer_array);
     softPwmWrite(MOTOR1, 0);
+    delay(10);
     softPwmWrite(MOTOR2, 0);
+    delay(10);
     printf("Finished!\n");
 
     printf("\nITAE: %.4f", ITAE);
