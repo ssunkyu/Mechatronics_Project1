@@ -2,13 +2,11 @@
 #include <math.h>
 #include <wiringPi.h>
 #include <softPwm.h>
-#include <termio.h>
-#include <unistd.h>
 #include <stdlib.h>
 
 #define SAMPLINGTIME 5 // Sampling time (ms)
 // Gain Settings
-#define PGAIN 400
+#define PGAIN 600
 #define IGAIN 0.1
 #define DGAIN 1.0
 
