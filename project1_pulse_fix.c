@@ -2,50 +2,50 @@
 #include <math.h>
 #include <wiringPi.h>
 #include <softPwm.h>
-#include <stdlib.h>
+#include <stdlib.h> // Library for dynamic memory allocation
 
 #define SAMPLINGTIME 5 // Sampling time (ms)
-// Gain Settings
+// Gain settings
 #define PGAIN 600
 #define IGAIN 0.1
 #define DGAIN 1.0
 
-//# of GPIO Pins
-#define PULSE 5 // should change
+//# of GPIO pins
+#define PULSE 5 // Should change
 #define ENCODERA 17
 #define ENCODERB 27
 #define ENC2REDGEAR 217
 #define MOTOR1 19
 #define MOTOR2 26
 
-int encA; // signal of encA
-int encB; // signal of encB
-int pulse; // signal of pulse
-int encoderPosition = 0; // Position of Encoder
-float redGearPosition = 0; // Actual Rotation Position
-float referencePosition = 0; // Reference Rotation Position
-float *refer_array = NULL;
+int encA; // Signal of encA
+int encB; // Signal of encB
+int pulse; // Signal of pulse
+int encoderPosition = 0; // Encoder position count
+float redGearPosition = 0; // Actual rotation position of the red gear
+float referencePosition = 0; // Desired reference position
+float *refer_array = NULL; // Pointer of referfence rotation position 
 
 unsigned int startTime = 0; // Start time of PID control
-unsigned int checkTimeBefore = 0;
-unsigned int checkTime = 0;
+unsigned int checkTimeBefore = 0; // Previous check time for sampling
+unsigned int checkTime = 0; // Current check time for sampling
 
-float m; // Input to Motor
-float m1; // Prevvious Input to Motor 
-float e; // Present Step Error
-float e1; // Previous Step Error
-float e2; // Two Steps back Step Error
+float m; // Current motor input value
+float m1; // Previous motor input value
+float e; // Current error
+float e1; // Previous error
+float e2; // Error two samples ago
 
 float ITAE = 0; // Integral of Time-weighted Absolute Error
-float G1, G2, G3; // Constant values of results of GAIN calculation
+float G1, G2, G3; // PID constants based on gain settings
 
-int pulseChanged = 0;
-int pulse_n = 0;
+int pulseChanged = 0; // Flag to indicate a change in pulse, 1 if a new pulse is detected
+int pulse_n = 0; // Counter for the number of pulses processed
 
-// Using ISR, if PULSE is HIGH, change the value of flag to change next reference position
+// This function is called when a rising edge is detected on the PULSE pin
 void onPulseChange() {
     if (digitalRead(PULSE) == HIGH) {
-        pulseChanged = 1; // value of flag
+        pulseChanged = 1; // Set the flag to indicate a pulse has been 
     }
 }
 
@@ -89,11 +89,13 @@ void funcEncoderB()
 
 void PID_CONTROL()
 {
+    // Record start time for PID control
     startTime = millis();
     checkTimeBefore = millis();
+    // Calculate initial error
     e = referencePosition - redGearPosition;
 
-    // Initialize m1, e1, e2  
+    // Initialize m1, e1, e2
     m1 = 0;
     e1 = 0;
     e2 = 0;
@@ -103,22 +105,22 @@ void PID_CONTROL()
     G2 = -(PGAIN + 2*DGAIN/SAMPLINGTIME*1000.0);
     G3 = DGAIN/SAMPLINGTIME*1000.0;
     
+    // Reset the pulse change flag
     pulseChanged = 0;
     
     while(!pulseChanged)
     {
         checkTime = millis();
-        if (pulseChanged)
-        {
-            break;
-        }
-
+        // Compute motor input using PID formula
         m = m1 + G1*e + G2*e1 + G3*e2;
-
+        
+        // Check if it's time for the next PID computation
         if (checkTime - checkTimeBefore >= SAMPLINGTIME){
+            // Print position at fixed intervals for debugging
             if((checkTime-startTime)%100==0){
                 printf("%f\n", redGearPosition);
             }
+            // Apply control signal to motor
             if(e > 0){
                 softPwmWrite(MOTOR2,m);
                 softPwmWrite(MOTOR1,0);
@@ -127,10 +129,13 @@ void PID_CONTROL()
                 softPwmWrite(MOTOR1,-m);
                 softPwmWrite(MOTOR2,0);
             }
+            // Record the time for this iteration
             checkTimeBefore = checkTime;
+            // Update m1, e2, e1
             m1 = m;
             e2 = e1;
             e1 = e;
+            // Update ITAE performance measure
             ITAE = ITAE + SAMPLINGTIME/1000.0 * (checkTime-startTime)/1000.0 * fabs(e);
         }
     }
@@ -169,24 +174,27 @@ int main(void)
 
     wiringPiISR(ENCODERA, INT_EDGE_BOTH, funcEncoderA);
     wiringPiISR(ENCODERB, INT_EDGE_BOTH, funcEncoderB);
-    // If, PULSE INT_EDGE_RISING, onPulseChange is interrupted
+    // Set up an interrupt that calls onPulseChange when a rising edge is detected on the PULSE pin
     wiringPiISR(PULSE, INT_EDGE_RISING, onPulseChange);
     
     while(1)
     {
+        // If the number of processed pulses equals the number of trails, exit the loop
 		if (pulse_n==n) break;
 		
-		referencePosition = refer_array[pulse_n]; // Change reference position to ith refer_array
+        // Update the reference position from the refer_array
+		referencePosition = refer_array[pulse_n];
+        // If a pulse has been detected, perform PID control and increment the pulse counter
         if(pulseChanged)
         {
             PID_CONTROL();
             pulse_n++;
         }
     }
-    
+    // Free the dynamically allocated memory
     free(refer_array);
     softPwmWrite(MOTOR1, 0);
-    delay(10);
+    delay(10); // Add delay to stop motor
     softPwmWrite(MOTOR2, 0);
     delay(10);
     printf("Finished!\n");
