@@ -10,7 +10,7 @@ input_value = 10.0
 TOLERANCE = 0.02
 
 # Get a list of all CSV files in the `./csv` directory
-csv_files = [f for f in os.listdir('./csv/PGAIN') if f.endswith('.csv')]
+csv_files = [f for f in os.listdir('./csv/IGAIN') if f.endswith('.csv')]
 
 # Extract the gains from the file name using regular expressions
 for file_name in csv_files:
@@ -21,8 +21,8 @@ for file_name in csv_files:
     print(file_name)
 
     # Set file paths
-    file_path = f'./csv/PGAIN/{file_name}'
-    graph_img_path = f"./graph_img/PGAIN/{pgain}_{igain}_{dgain}_response.png"
+    file_path = f'./csv/IGAIN/{file_name}'
+    graph_img_path = f"./graph_img/IGAIN/{pgain}_{igain}_{dgain}_response.png"
 
     # Read the data and ITAE value from the CSV
     data = pd.read_csv(file_path, header=None, names=['Time', 'redGearPosition'], skipfooter=1, engine='python')
@@ -36,8 +36,7 @@ for file_name in csv_files:
     rise_time = S['RiseTime']
     peak_time = S['PeakTime']
     settling_time = S['SettlingTime']
-    steady_state_error = input_value - steady_state_value
-    print(steady_state_error)
+    steady_state_error = steady_state_value - input_value
     
     # Calculate the rise time (10% to 90% of the final value)
     rise_time_start = data['Time'][data['redGearPosition'] >= 0.1 * input_value].iloc[0]
