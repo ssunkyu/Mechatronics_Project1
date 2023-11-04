@@ -8,9 +8,9 @@
 #define SAMPLINGTIME 5 // Sampling time (ms)
 #define LOOPTIME 10000 // Loop time (ms), Drive motor for 5 seconds
 // Gain Settings
-#define PGAIN 2000.0
+#define PGAIN 50.0
 #define IGAIN 0.0
-#define DGAIN 0.0
+#define DGAIN 10.0
 
 // # of GPIO Pins 
 #define ENCODERA 17
