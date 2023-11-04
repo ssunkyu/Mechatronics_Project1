@@ -1,96 +1,98 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-import numpy as np
-from scipy.signal import find_peaks
 import re
+from scipy.signal import find_peaks
+import numpy as np
 
-# Constants
-FINAL_VALUE = 8.0
-TOLERANCE = 0.02 * FINAL_VALUE
+# Load the CSV file into a pandas DataFrame
 
-# Extract the gains from the file name using regular expressions
 file_name = "1200.0_0.1_1.0.csv"
 match = re.match(r"(\d+\.\d+)_(\d+\.\d+)_(\d+\.\d+)", file_name)
 if match:
     pgain, igain, dgain = match.groups()
+    
+file_path = './csv/' + file_name
+data = pd.read_csv(file_path, header=None, names=['Time', 'redGearPosition'], skipfooter=1, engine='python')
 
-# Set file paths
-file_path = f'./csv/{file_name}'
-graph_img_path = f"./graph_img/{pgain}_{igain}_{dgain}_response.png"
-
-# Read the data and ITAE value from the CSV
-data = pd.read_csv(file_path, header=None, names=['Time', 'Position'], skipfooter=1, engine='python')
 with open(file_path, 'r') as f:
-    itae_value = float(f.readlines()[-1].strip().split(',')[-1])
+    last_line = f.readlines()[-1].strip()
+    _, itae_value_str = last_line.split(',')
+    itae_value = float(itae_value_str)
 
-# Calculate the rise time (10% to 90% of the final value)
-rise_time_start = data['Time'][data['Position'] >= 0.1 * FINAL_VALUE].iloc[0]
-rise_time_end = data['Time'][data['Position'] >= 0.9 * FINAL_VALUE].iloc[0]
+
+# Define the final value as the constant 8
+final_value = 8.0
+
+# Calculate rise time from 10% to 90% of the final value
+rise_time_start = data['Time'][data['redGearPosition'] >= 0.1 * final_value].iloc[0]
+rise_time_end = data['Time'][data['redGearPosition'] >= 0.9 * final_value].iloc[0]
 rise_time = rise_time_end - rise_time_start
 
 # Find peak time
-peak_time = data['Time'][data['Position'] == data['Position'].max()].iloc[0]
+peak_time = data['Time'][data['redGearPosition'] == data['redGearPosition'].max()].iloc[0]
 
-# Find peaks and troughs to determine the settling time
-peaks, _ = find_peaks(data['Position'], height=FINAL_VALUE * (1 - TOLERANCE))
-troughs, _ = find_peaks(-data['Position'], height=-FINAL_VALUE * (1 + TOLERANCE))
+# 최종 값에 대한 허용 오차 범위 설정 (2%)
+tolerance = 0.02 * final_value
+
+# 최대값과 최소값(극값) 인덱스 찾기
+peaks, _ = find_peaks(data['redGearPosition'], height=final_value * (1 - tolerance))
+troughs, _ = find_peaks(-data['redGearPosition'], height=-final_value * (1 + tolerance))
+
+# 모든 극값 인덱스 결합
 extrema = np.sort(np.concatenate((peaks, troughs)))
 
-# Find the first extremum within the tolerance after the peak time
-settling_time = next((data['Time'][extremum] for extremum in extrema 
-                      if data['Time'][extremum] > peak_time and 
-                      FINAL_VALUE * (1 - TOLERANCE) <= data['Position'][extremum] <= FINAL_VALUE * (1 + TOLERANCE)),
-                     None)
+# peak_time 이후 최종 값 범위 내에 들어서는 첫 번째 극값 찾기
+for extrema_index in extrema:
+    if data['Time'][extrema_index] > peak_time:
+        if data['redGearPosition'][extrema_index] <= final_value * (1 + tolerance) and \
+           data['redGearPosition'][extrema_index] >= final_value * (1 - tolerance):
+            settling_time = data['Time'][extrema_index]
+            break
 
-# Calculate steady state error (SSE)
-steady_state_error = FINAL_VALUE - data['Position'].iloc[-1]
 
-# Plot the motor position response
+# Calculate steady state error (SSE) as the difference between the final value and the last redGearPosition value
+steady_state_error = final_value - data['redGearPosition'].iloc[-1]
+
+# Plotting the updated data with annotations for settling time and SSE
 plt.figure(figsize=(12, 6))
-plt.plot(data['Time'], data['Position'], label='Motor Position', color='blue')
+plt.plot(data['Time'], data['redGearPosition'], label='Motor redGearPosition', color='blue')
 
-# Annotate rise time
-plt.annotate(f'10-90% Rise Time: {rise_time:.2f}s', 
-             xy=(rise_time_end, FINAL_VALUE * 0.9), 
-             xytext=(rise_time_end, FINAL_VALUE * 0.95), 
-             arrowprops=dict(facecolor='green', shrink=0.05), 
-             color='green')
+# Annotate the rise time (10% to 90% of the final value)
+plt.plot([0, rise_time_end], [final_value * 0.9, final_value * 0.9], color='green', linestyle='--')
+plt.plot([rise_time_start, rise_time_start], [0, final_value * 0.1], color='green', linestyle='--')
+plt.plot([rise_time_end, rise_time_end], [0, final_value * 0.9], color='green', linestyle='--')
+plt.text(rise_time_end, final_value * 0.9, f'10-90% Rise Time: {rise_time:.2f}s', color='green')
 
-# Annotate settling time
-if settling_time:
-    plt.annotate(f'Settling Time: {settling_time:.2f}s', 
-                 xy=(settling_time, FINAL_VALUE), 
-                 xytext=(settling_time + 0.2, FINAL_VALUE * 0.5), 
-                 arrowprops=dict(facecolor='red', shrink=0.05), 
-                 color='red')
+# Annotate the settling time (first time after peak within 2% of final value)
+plt.plot([settling_time, settling_time], [0, final_value], color='red', linestyle='--')
+plt.text(settling_time, final_value * 0.5, f'Settling Time: {settling_time:.2f}s', color='red')
 
-# Annotate overshoot
-overshoot_value = data['Position'].max() - FINAL_VALUE
-overshoot_time = data['Time'][data['Position'] == data['Position'].max()].iloc[0]
-overshoot_percentage = (overshoot_value / FINAL_VALUE) * 100
-plt.annotate(f'Overshoot: {overshoot_percentage:.2f}%', 
-             xy=(overshoot_time, data['Position'].max()), 
-             xytext=(overshoot_time + 0.1, data['Position'].max() + 0.5), 
-             arrowprops=dict(facecolor='purple', shrink=0.05), 
-             color='purple')
+# Annotate the overshoot (percentage over the final value)
+# Calculate overshoot as the value over the final value
+overshoot_value = data['redGearPosition'].max() - final_value
+overshoot_time = data['Time'][data['redGearPosition'] == data['redGearPosition'].max()].iloc[0]
+overshoot_percentage = (data['redGearPosition'].max() - final_value) / final_value * 100
+plt.plot([overshoot_time, overshoot_time], [final_value, data['redGearPosition'].max()], color='purple', linestyle='--')
+plt.scatter([overshoot_time], [data['redGearPosition'].max()], color='purple')
+plt.text(overshoot_time, final_value + overshoot_value, f'Overshoot: {overshoot_percentage:.2f}%', color='purple')
 
 # Annotate steady state error
-plt.annotate(f'SSE: {steady_state_error:.2f}', 
-             xy=(data['Time'].iloc[-1], data['Position'].iloc[-1]), 
-             xytext=(data['Time'].iloc[-50], data['Position'].iloc[-1] + 0.5), 
-             arrowprops=dict(facecolor='orange', shrink=0.05), 
-             color='orange')
+plt.text(data['Time'].iloc[-200], data['redGearPosition'].iloc[-1]+0.1, f'Steady state error: {steady_state_error:.2f}', color='orange')
+# Final value line
+plt.hlines(final_value, 0, data['Time'].iloc[-1], colors='orange', linestyles='--', label='Final Value (8.0)')
 
-# Add final value line, title, labels, and legend
-plt.axhline(y=FINAL_VALUE, color='orange', linestyle='--', label='Final Value')
-plt.title(f'Motor Position Response (PGain: {pgain}, IGain: {igain}, DGain: {dgain}, ITAE: {itae_value:.2f})')
+# Title and labels
+title = f'Motor redGearPosition Response (PGain: {pgain}, IGain: {igain}, DGain: {dgain}, ITAE: {itae_value:.2f})'
+plt.title(title)
 plt.xlabel('Time (seconds)')
-plt.ylabel('Position')
+plt.ylabel('redGearPosition')
 plt.grid(True)
 plt.legend(loc='lower right')
-plt.xlim(left=0)
+plt.xlim(left=0, right=5.1)
 plt.ylim(bottom=0)
 
-# Save the figure and display the plot
-plt.savefig(graph_img_path, bbox_inches='tight')
+# Save the figure
+save_file_name = f"{pgain}_{igain}_{dgain}_response.png"
+plt.savefig(f'./graph_img/{save_file_name}', bbox_inches='tight')
+
 plt.show()
