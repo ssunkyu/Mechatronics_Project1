@@ -10,7 +10,7 @@
 // Gain Settings
 #define PGAIN 50.0
 #define IGAIN 0.0
-#define DGAIN 10.0
+#define DGAIN 0.0
 
 // # of GPIO Pins 
 #define ENCODERA 17
