@@ -10,7 +10,7 @@ input_value = 10.0
 TOLERANCE = 0.02
 
 # Get a list of all CSV files in the `./csv` directory
-csv_files = [f for f in os.listdir('./csv/IGAIN') if f.endswith('.csv')]
+csv_files = [f for f in os.listdir('./csv/DGAIN') if f.endswith('.csv')]
 
 # Extract the gains from the file name using regular expressions
 for file_name in csv_files:
@@ -21,8 +21,8 @@ for file_name in csv_files:
     print(file_name)
 
     # Set file paths
-    file_path = f'./csv/IGAIN/{file_name}'
-    graph_img_path = f"./graph_img/IGAIN/{pgain}_{igain}_{dgain}_response.png"
+    file_path = f'./csv/DGAIN/{file_name}'
+    graph_img_path = f"./graph_img/DGAIN/{pgain}_{igain}_{dgain}_response.png"
 
     # Read the data and ITAE value from the CSV
     data = pd.read_csv(file_path, header=None, names=['Time', 'redGearPosition'], skipfooter=1, engine='python')
@@ -30,28 +30,17 @@ for file_name in csv_files:
         itae_value = float(f.readlines()[-1].strip().split(',')[-1])
         
     steady_state_value = data['redGearPosition'].iloc[-1]
-
+    
+    S = control.step_info(data['redGearPosition'], T=data['Time'], T_num=None, yfinal=input_value, SettlingTimeThreshold=0.02, RiseTimeLimits=(0.1, 0.9))
+    
+    rise_time = S['RiseTime']
+    peak_time = S['PeakTime']
+    settling_time = S['SettlingTime']
+    steady_state_error = S['SteadyStateValue'] - input_value
+    
     # Calculate the rise time (10% to 90% of the final value)
     rise_time_start = data['Time'][data['redGearPosition'] >= 0.1 * input_value].iloc[0]
     rise_time_end = data['Time'][data['redGearPosition'] >= 0.9 * input_value].iloc[0]
-    rise_time = rise_time_end - rise_time_start
-
-    # Find peak time
-    peak_time = data['Time'][data['redGearPosition'] == data['redGearPosition'].max()].iloc[0]
-
-    # Find peaks and troughs to determine the settling time
-    peaks, _ = find_peaks(data['redGearPosition'], height=steady_state_value * (1 - TOLERANCE))
-    troughs, _ = find_peaks(-data['redGearPosition'], height=-steady_state_value * (1 + TOLERANCE))
-    extrema = np.sort(np.concatenate((peaks, troughs)))
-
-    # Find the first extremum within the tolerance after the peak time
-    settling_time = next((data['Time'][extremum] for extremum in extrema 
-                        if data['Time'][extremum] > peak_time and 
-                        steady_state_value * (1 - TOLERANCE) <= data['redGearPosition'][extremum] <= steady_state_value * (1 + TOLERANCE)),
-                        None)
-
-    # Calculate steady state error (SSE)
-    steady_state_error = steady_state_value - input_value
 
     # Plot the motor redGearPosition response
     plt.figure(figsize=(12, 6))
