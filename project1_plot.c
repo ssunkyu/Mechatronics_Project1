@@ -182,7 +182,7 @@ int main(void)
     
     printf("\nITAE: %.4f", ITAE);
     
-    sprintf(filename, "%.1f_%.1f_%.1f_%.2f", PGAIN, IGAIN, DGAIN, ITAE);
+    sprintf(filename, "%.1f_%.1f_%.1f", PGAIN, IGAIN, DGAIN);
     sprintf(filepath, "/home/pi/Mechatronics/csv/%s.csv", filename);
     file = fopen(filepath, "w+");
     
@@ -190,6 +190,7 @@ int main(void)
     {
         fprintf(file, "%.3f,%.3f\n", dataArray[i][0], dataArray[i][1]);
     }
+    fprintf(file, "ITAE,%.3f\n", ITAE);
     fclose(file);
     
     plotGraph();
