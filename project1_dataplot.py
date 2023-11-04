@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Load the CSV file into a pandas DataFrame
-file_path = './csv/600.0_0.1_1.0_2.06.csv'  # 파일 경로를 여러분의 파일 경로로 변경하세요.
+file_path = './csv/200.0_0.1_1.0.csv'  # 파일 경로를 여러분의 파일 경로로 변경하세요.
 data = pd.read_csv(file_path, header=None, names=['Time', 'Position'])
 
 # Redefine the final value as the constant 8
