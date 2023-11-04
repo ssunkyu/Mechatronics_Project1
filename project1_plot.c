@@ -6,11 +6,11 @@
 #include <string.h>
 
 #define SAMPLINGTIME 5 // Sampling time (ms)
-#define LOOPTIME 5000 // Loop time (ms), Drive motor for 5 seconds
+#define LOOPTIME 10000 // Loop time (ms), Drive motor for 5 seconds
 // Gain Settings
-#define PGAIN 400.0
+#define PGAIN 1500.0
 #define IGAIN 0.1
-#define DGAIN 0.5
+#define DGAIN 1.0
 
 // # of GPIO Pins 
 #define ENCODERA 17
@@ -23,6 +23,8 @@
 #define NUM_COLUMNS 2 // Size of array (col, time & position)
 #define DAQ_TIME 10000 // Data logging for 10s
 
+float referencePosition = 10.0;
+
 int n; // number of trails
 
 int encA; // signal of encA
@@ -30,7 +32,6 @@ int encB; // signal of encB
 int pulse; // signal of pulse
 int encoderPosition = 0; // Position of Encoder
 float redGearPosition = 0; // Rotation Position of Motor
-float referencePosition = 0; // Reference Rotation Position
 float *refer_array = NULL;
 
 unsigned int startTime = 0;
@@ -161,8 +162,6 @@ int main(void)
     char filename[100];
     char filepath[200];
     FILE* file;
-
-    referencePosition = 8.0;
    
     wiringPiSetupGpio();
     pinMode(ENCODERA, INPUT);
@@ -182,7 +181,7 @@ int main(void)
     
     printf("\nITAE: %.4f", ITAE);
     
-    sprintf(filename, "%.1f_%.1f_%.1f", PGAIN, IGAIN, DGAIN);
+    sprintf(filename, "%.3f_%.3f_%.3f", PGAIN, IGAIN, DGAIN);
     sprintf(filepath, "/home/pi/Mechatronics/csv/%s.csv", filename);
     file = fopen(filepath, "w+");
     
