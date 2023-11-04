@@ -6,11 +6,11 @@ from scipy.signal import find_peaks
 import re
 
 # Constants
-input_value = 8.0   
+input_value = 10.0   
 TOLERANCE = 0.02
 
 # Get a list of all CSV files in the `./csv` directory
-csv_files = [f for f in os.listdir('./csv') if f.endswith('.csv')]
+csv_files = [f for f in os.listdir('./csv/DGAIN') if f.endswith('.csv')]
 
 # Extract the gains from the file name using regular expressions
 for file_name in csv_files:
@@ -21,8 +21,8 @@ for file_name in csv_files:
     print(file_name)
 
     # Set file paths
-    file_path = f'./csv/{file_name}'
-    graph_img_path = f"./graph_img/{pgain}_{igain}_{dgain}_response.png"
+    file_path = f'./csv/DGAIN/{file_name}'
+    graph_img_path = f"./graph_img/DGAIN/{pgain}_{igain}_{dgain}_response.png"
 
     # Read the data and ITAE value from the CSV
     data = pd.read_csv(file_path, header=None, names=['Time', 'redGearPosition'], skipfooter=1, engine='python')
